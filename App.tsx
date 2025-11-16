@@ -1,10 +1,10 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Project, Client, Task } from './types';
 import { ProjectStatus, TaskStatus } from './types';
 import { DashboardIcon, ProjectIcon, AIToolsIcon, ChevronDownIcon, PlusIcon } from './components/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 import AIToolModal from './components/AIModal';
+import AddProjectModal from './components/AddProjectModal';
 
 // MOCK DATA
 const mockClients: Client[] = [
@@ -316,10 +316,11 @@ const ProjectDetailView: React.FC<{ project: Project; onBack: () => void }> = ({
 // MAIN APP COMPONENT
 
 const App: React.FC = () => {
-    const [projects] = useState<Project[]>(mockProjects);
+    const [projects, setProjects] = useState<Project[]>(mockProjects);
     const [clients] = useState<Client[]>(mockClients);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+    const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
     const [activeAiTool, setActiveAiTool] = useState<'schedule' | 'risk'>('schedule');
     const [isProjectsMenuOpen, setIsProjectsMenuOpen] = useState(false);
     const [filters, setFilters] = useState({
@@ -374,6 +375,17 @@ const App: React.FC = () => {
         setFilters(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleAddProject = (projectData: Omit<Project, 'id' | 'spent' | 'tasks'>) => {
+        const newProject: Project = {
+            ...projectData,
+            id: `proj-${new Date().getTime()}`,
+            spent: 0,
+            tasks: [],
+        };
+        setProjects(prev => [newProject, ...prev]);
+        setIsAddProjectModalOpen(false);
+    };
+
     const clearFilters = () => {
         setFilters({
             status: 'All',
@@ -394,7 +406,10 @@ const App: React.FC = () => {
         <div className="p-4 sm:p-6 lg:p-8">
             <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard de Projetos</h1>
-                <button className="mt-4 sm:mt-0 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors">
+                <button 
+                    onClick={() => setIsAddProjectModalOpen(true)}
+                    className="mt-4 sm:mt-0 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors"
+                >
                     <PlusIcon className="w-5 h-5 mr-2" />
                     Novo Projeto
                 </button>
@@ -458,6 +473,12 @@ const App: React.FC = () => {
                 onClose={() => setIsAiModalOpen(false)} 
                 tool={activeAiTool}
                 project={selectedProject || undefined}
+            />
+            <AddProjectModal
+                isOpen={isAddProjectModalOpen}
+                onClose={() => setIsAddProjectModalOpen(false)}
+                onAddProject={handleAddProject}
+                clients={clients}
             />
             <aside className="w-64 flex-shrink-0 bg-white dark:bg-gray-800 shadow-lg flex flex-col">
                 <div className="h-16 flex items-center justify-center border-b border-gray-200 dark:border-gray-700">
